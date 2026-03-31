@@ -102,22 +102,22 @@ WHITE    = c("FFFFFF")
 
 # 品牌列表
 BRANDS = [
-    ("锐捷/睿易",   "[B]", "ruijie",  "192.168.110.1", "admin", "admin"),
-    ("小米/红米",   "[X]", "xiaomi",  "192.168.31.1",  "admin", ""),
+    ("Ruijie/Reyee",   "[B]", "ruijie",  "192.168.110.1", "admin", "admin"),
+    ("Xiaomi/Redmi",   "[X]", "xiaomi",  "192.168.31.1",  "admin", ""),
     ("TP-Link",     "[R]", "tplink",  "192.168.0.1",   "admin", "admin"),
-    ("华为/荣耀",   "[R]", "huawei",  "192.168.3.1",   "admin", ""),
-    ("ASUS 华硕",   "[B]", "asus",    "192.168.50.1",  "admin", "admin"),
+    ("Huawei/Honor",   "[R]", "huawei",  "192.168.3.1",   "admin", ""),
+    ("ASUS",   "[B]", "asus",    "192.168.50.1",  "admin", "admin"),
     ("Netgear",     "[N]", "netgear", "192.168.1.1",   "admin", "password"),
     ("D-Link",      "[G]", "dlink",   "192.168.0.1",   "Admin", ""),
-    ("360 路由",    "[G]", "r360",    "192.168.0.1",   "admin", "admin"),
-    ("腾达 Tenda",  "[B]", "tenda",   "192.168.0.1",   "admin", "admin"),
-    ("水星 Mercury","[M]", "mercury", "192.168.1.1",   "admin", "admin"),
+    ("360 Router",    "[G]", "r360",    "192.168.0.1",   "admin", "admin"),
+    ("Tenda",  "[B]", "tenda",   "192.168.0.1",   "admin", "admin"),
+    ("Mercury","[M]", "mercury", "192.168.1.1",   "admin", "admin"),
     ("OpenWrt",     "[O]", "openwrt", "192.168.1.1",   "root",  ""),
-    ("中兴 ZTE",    "[B]", "zte",     "192.168.1.1",   "admin", "admin"),
-    ("演示模式",    "[D]", "demo",    "192.168.1.1",   "",      ""),
+    ("ZTE G7615",    "[B]", "zte",     "192.168.1.1",   "admin", "admin"),
+    ("Demo Mode",    "[D]", "demo",    "192.168.1.1",   "",      ""),
 ]
 
-PLATFORM_CATS = ["[Game] 游戏", "[TV] 视频", "[Web] 浏览", "[Chat] 社交", "[DL] 下载"]
+PLATFORM_CATS = ["[Game] Gaming", "[TV] Video", "[Web] Browse", "[Chat] Social", "[DL] Download"]
 
 # ════════════════════════════════════════════════════════════
 #  路由器驱动层（内嵌，同 PC 版逻辑）
@@ -142,7 +142,7 @@ class RouterAPI:
         if not HAS_REQUESTS:
             return False, "requests 库未安装"
         if self.brand_id == "demo":
-            return True, "演示模式"
+            return True, "Demo Mode"
         try:
             fn = getattr(self, "_login_" + self.brand_id, None)
             if fn:
@@ -309,7 +309,7 @@ class RouterAPI:
                     (r.status_code==200 and len(text)>800
                      and "login" not in text[:300].lower())):
                     self._zte_auth = 2
-                    return True, "ZTE超级管理员({})登录成功".format(u)
+                    return True, "ZTE SuperAdmin({}) OK".format(u)
             except Exception:
                 pass
         # 普通用户降级
@@ -324,10 +324,10 @@ class RouterAPI:
             self.sid = self.session.cookies.get("JSESSIONID", jsid)
             self._zte_auth = 1
             if r.status_code in (200,302):
-                return True, "ZTE普通用户登录成功(数据受限)"
+                return True, "ZTE user login OK (limited)"
         except Exception as e:
             return False, str(e)[:50]
-        return False, "ZTE登录失败，请检查密码或获取超级密码"
+        return False, "ZTE login failed - check password"
 
     def fetch_clients(self):
         if self.brand_id == "demo":
@@ -825,7 +825,7 @@ class BrandScreen(Screen):
             Rectangle(pos=top.pos, size=top.size)
         top.bind(pos=lambda *_: top._draw(), size=lambda *_: top._draw())
 
-        top.add_widget(Label(text="⬡", font_size=sp(22), color=ACCENT,
+        top.add_widget(Label(text="NG", font_size=sp(22), color=ACCENT,
                              size_hint=(None,1), width=dp(36), bold=True))
         top.add_widget(Label(text="NetGuard Pro", font_size=sp(16),
                              color=TEXT, bold=True,
@@ -836,7 +836,7 @@ class BrandScreen(Screen):
 
         # 副标题
         root.add_widget(KLabel(
-            text="选择您的路由器品牌",
+            text="Select Router Brand",
             font_size=sp(13), color=TEXT2,
             halign="center", height=dp(40),
             padding=[dp(16), 0]))
@@ -914,7 +914,7 @@ class ConnectScreen(Screen):
                            font_size=sp(18))
         back_btn.bind(on_release=lambda _: App.get_running_app().go_back())
         top.add_widget(back_btn)
-        self._title_lbl = Label(text="连接路由器", font_size=sp(16),
+        self._title_lbl = Label(text="Connect Router", font_size=sp(16),
                                  color=TEXT, bold=True,
                                  size_hint=(1,1), halign="left")
         top.add_widget(self._title_lbl)
@@ -934,9 +934,9 @@ class ConnectScreen(Screen):
         form_card.add_widget(self._note_lbl)
 
         for label_text, attr, is_pwd in [
-            ("路由器 IP", "_inp_ip", False),
-            ("用户名",   "_inp_user", False),
-            ("密  码",   "_inp_pass", True),
+            ("Router IP", "_inp_ip", False),
+            ("Username",   "_inp_user", False),
+            ("Password",   "_inp_pass", True),
         ]:
             form_card.add_widget(KLabel(text=label_text, font_size=sp(11),
                                          color=TEXT2, height=dp(24)))
@@ -953,7 +953,7 @@ class ConnectScreen(Screen):
         self._prog.opacity = 0
         form_card.add_widget(self._prog)
 
-        self._conn_btn = KButton(text="▶  连接", bg=ACCENT, fg=BG,
+        self._conn_btn = KButton(text="▶  Connect", bg=ACCENT, fg=BG,
                                   height=dp(50), font_size=sp(15))
         self._conn_btn.bind(on_release=self._do_connect)
         form_card.add_widget(self._conn_btn)
@@ -991,7 +991,7 @@ class ConnectScreen(Screen):
         if not host:
             self._status_lbl.text = "⚠ 请输入路由器 IP"
             return
-        self._status_lbl.text = "正在连接 {} ...".format(host)
+        self._status_lbl.text = "Connecting {} ...".format(host)
         self._prog.opacity = 1
         self._conn_btn.disabled = True
 
@@ -1046,7 +1046,7 @@ class MainScreen(Screen):
         top.bind(pos=lambda *_: setattr(self._top_bg, "pos", top.pos),
                  size=lambda *_: setattr(self._top_bg, "size", top.size))
 
-        top.add_widget(Label(text="⬡", font_size=sp(20), color=ACCENT,
+        top.add_widget(Label(text="NG", font_size=sp(20), color=ACCENT,
                              size_hint=(None,1), width=dp(28), bold=True))
         self._router_lbl = Label(text="NetGuard Pro", font_size=sp(13),
                                   color=TEXT, bold=True,
@@ -1059,7 +1059,7 @@ class MainScreen(Screen):
         refresh_btn.bind(on_release=lambda _: self._tab_dev.refresh())
         top.add_widget(refresh_btn)
 
-        switch_btn = KButton(text="切换", bg=CARD2, fg=TEXT2,
+        switch_btn = KButton(text="Switch", bg=CARD2, fg=TEXT2,
                              size_hint=(None,1), width=dp(48), height=dp(36),
                              font_size=sp(11))
         switch_btn.bind(on_release=lambda _: App.get_running_app().go_brand())
@@ -1086,10 +1086,10 @@ class MainScreen(Screen):
                  size=lambda *_: setattr(self._nav_bg, "size", nav.size))
 
         nav_items = [
-            (">>", "监控", "dash"),
-            ("[Desktop]",  "设备", "devices"),
-            ("**", "控制", "control"),
-            ("--", "日志", "log"),
+            (">>", "Monitor", "dash"),
+            ("[Desktop]",  "Devices", "devices"),
+            ("**", "Control", "control"),
+            ("--", "Log", "log"),
         ]
         self._nav_btns = {}
         for icon, label_text, tab_name in nav_items:
@@ -1167,10 +1167,10 @@ class DashTab(Screen):
         kpi_grid = GridLayout(cols=2, spacing=dp(8),
                               size_hint=(1, None), height=dp(160))
         kpi_defs = [
-            ("在线设备", "0 台",       GREEN,  "devs"),
+            ("Online", "0 台",       GREEN,  "devs"),
             ("⬆ 上传",  "0.00 MB/s", ACCENT, "up"),
             ("⬇ 下载",  "0.00 MB/s", GREEN,  "down"),
-            ("平均延迟", "— ms",      YELLOW, "lat"),
+            ("Avg", "— ms",      YELLOW, "lat"),
         ]
         for name, val, color, key in kpi_defs:
             card = KCard(bg_color=CARD, orientation="vertical",
@@ -1186,7 +1186,7 @@ class DashTab(Screen):
         layout.add_widget(kpi_grid)
 
         # 设备速度列表
-        layout.add_widget(KLabel(text="设备实时流量", font_size=sp(13),
+        layout.add_widget(KLabel(text="Live Traffic", font_size=sp(13),
                                   color=TEXT2, bold=True, height=dp(32)))
         self._dev_scroll_layout = BoxLayout(orientation="vertical",
                                              spacing=dp(6),
@@ -1228,7 +1228,7 @@ class DashTab(Screen):
         top_row.add_widget(Label(text=d["name"], font_size=sp(12), color=TEXT,
                                   bold=True, halign="left", size_hint=(1,1)))
         speed_txt = "{:.1f}↑ {:.1f}↓ MB/s".format(
-            d["upload_speed"], d["download_speed"]) if d["online"] else "离线"
+            d["upload_speed"], d["download_speed"]) if d["online"] else "Offline"
         top_row.add_widget(Label(text=speed_txt, font_size=sp(10),
                                   color=ACCENT if d["online"] else TEXT3,
                                   halign="right", size_hint=(None,1), width=dp(120)))
@@ -1268,7 +1268,7 @@ class DeviceTab(Screen):
         # 工具栏
         tb = BoxLayout(orientation="horizontal", size_hint=(1,None),
                        height=dp(44), padding=[dp(10),dp(4)], spacing=dp(8))
-        self._search = KInput(hint="[Ggl] 搜索设备或IP",
+        self._search = KInput(hint="Search device or IP",
                                size_hint=(1,1), height=dp(36))
         self._search.bind(text=self._on_search)
         tb.add_widget(self._search)
@@ -1342,7 +1342,7 @@ class DeviceTab(Screen):
                                size_hint=(None,1), width=dp(14)))
         row1.add_widget(Label(text=d["name"], color=TEXT, bold=True,
                                font_size=sp(13), halign="left", size_hint=(1,1)))
-        status = "封锁" if d["blocked"] else ("在线" if d["online"] else "离线")
+        status = "Blocked" if d["blocked"] else ("Online" if d["online"] else "Offline")
         sc = d["stability_score"]
         grade_c = GREEN if sc>=90 else (YELLOW if sc>=75 else RED)
         row1.add_widget(Label(text=status, color=grade_c,
@@ -1369,7 +1369,7 @@ class DeviceTab(Screen):
             color=ACCENT, font_size=sp(10),
             halign="left", size_hint=(1,1)))
         row3.add_widget(Label(
-            text="延迟 {:.0f}ms  丢包 {:.1f}%".format(d["latency"], d["loss_rate"]),
+            text="Latency {:.0f}ms  Loss {:.1f}%".format(d["latency"], d["loss_rate"]),
             color=TEXT3, font_size=sp(10),
             halign="right", size_hint=(1,1)))
         card.add_widget(row3)
@@ -1428,14 +1428,14 @@ class DeviceDetailPopup(Popup):
         info_grid = GridLayout(cols=2, spacing=[dp(6), dp(4)],
                                size_hint=(1, None), height=dp(168))
         info_items = [
-            ("IP 地址", d["ip"]),
+            ("IP", d["ip"]),
             ("MAC",     d["mac"][:17]),
-            ("品牌",    d["brand"]),
+            ("Brand",    d["brand"]),
             ("接口",    d.get("interface","—") or "—"),
             ("频段",    d.get("frequency","—") or "—"),
             ("信号",    "{}%".format(d.get("signal",0))),
-            ("稳定性",  "{:.1f}%".format(d["stability_score"])),
-            ("首次发现", d["first_seen"].strftime("%m-%d %H:%M")),
+            ("Stability",  "{:.1f}%".format(d["stability_score"])),
+            ("First Seen", d["first_seen"].strftime("%m-%d %H:%M")),
         ]
         for label_text, val in info_items:
             info_grid.add_widget(Label(text=label_text+":", font_size=sp(10),
@@ -1471,13 +1471,13 @@ class DeviceDetailPopup(Popup):
         # 操作按钮
         btn_row = BoxLayout(orientation="horizontal",
                             size_hint=(1,None), height=dp(46), spacing=dp(10))
-        block_txt = "✅ 解封设备" if d["blocked"] else " 封锁设备"
+        block_txt = "Unblock Device" if d["blocked"] else " 封锁设备"
         block_bg  = GREEN2 if d["blocked"] else RED
         block_btn = KButton(text=block_txt, bg=block_bg, fg=WHITE)
         block_btn.bind(on_release=lambda _: self._toggle_block())
         btn_row.add_widget(block_btn)
 
-        ping_btn = KButton(text="[Rtr] Ping 测试", bg=ACCENT2, fg=BG)
+        ping_btn = KButton(text="Ping Test", bg=ACCENT2, fg=BG)
         ping_btn.bind(on_release=lambda _: self._ping())
         btn_row.add_widget(ping_btn)
         root.add_widget(btn_row)
@@ -1487,7 +1487,7 @@ class DeviceDetailPopup(Popup):
     def _toggle_block(self):
         d = self._d
         d["blocked"] = not d["blocked"]
-        action = "封锁" if d["blocked"] else "解封"
+        action = "Blocked" if d["blocked"] else "解封"
         App.get_running_app().add_log("{} 已{}".format(d["name"], action),
                                       "WARNING" if d["blocked"] else "SUCCESS")
         self.dismiss()
@@ -1545,7 +1545,7 @@ class ControlTab(Screen):
         dev_card = KCard(bg_color=CARD, orientation="vertical",
                          padding=[dp(14), dp(10)], spacing=dp(6),
                          size_hint=(1,None), height=dp(80))
-        self._ctrl_dev_lbl = Label(text="— 请从设备列表选择设备 —",
+        self._ctrl_dev_lbl = Label(text="-- Select a device --",
                                     font_size=sp(13), color=TEXT2,
                                     bold=True, halign="left",
                                     size_hint=(1,1))
@@ -1553,7 +1553,7 @@ class ControlTab(Screen):
 
         ctrl_btns = BoxLayout(orientation="horizontal",
                               size_hint=(1,None), height=dp(36), spacing=dp(8))
-        self._block_btn = KButton(text=" 封锁", bg=RED, fg=WHITE,
+        self._block_btn = KButton(text="Block", bg=RED, fg=WHITE,
                                    height=dp(36), font_size=sp(12))
         self._block_btn.bind(on_release=lambda _: self._toggle_block())
         ctrl_btns.add_widget(self._block_btn)
@@ -1561,10 +1561,10 @@ class ControlTab(Screen):
         layout.add_widget(dev_card)
 
         # 平台权限
-        layout.add_widget(KLabel(text="平台访问权限", font_size=sp(13),
+        layout.add_widget(KLabel(text="Access Control", font_size=sp(13),
                                   color=TEXT2, bold=True, height=dp(32)))
         self._perm_switches = {}
-        perm_colors = {"[Game] 游戏": PURPLE,"[TV] 视频":RED,
+        perm_colors = {"[Game] Gaming": PURPLE,"[TV] Video":RED,
                        " 浏览":ACCENT," 社交":GREEN," 下载":YELLOW}
         for cat in PLATFORM_CATS:
             row = BoxLayout(orientation="horizontal",
@@ -1581,19 +1581,19 @@ class ControlTab(Screen):
 
         # 时间限制
         layout.add_widget(Widget(size_hint=(1,None), height=dp(8)))
-        layout.add_widget(KLabel(text="上网时间段", font_size=sp(13),
+        layout.add_widget(KLabel(text="Schedule", font_size=sp(13),
                                   color=TEXT2, bold=True, height=dp(32)))
         time_row = BoxLayout(orientation="horizontal",
                              size_hint=(1,None), height=dp(44), spacing=dp(8))
         self._time_start = KInput(hint="08:00", size_hint=(1,1), height=dp(44))
         self._time_start.text = "08:00"
         time_row.add_widget(self._time_start)
-        time_row.add_widget(Label(text="至", color=TEXT2,
+        time_row.add_widget(Label(text="to", color=TEXT2,
                                    font_size=sp(14), size_hint=(None,1), width=dp(30)))
         self._time_end = KInput(hint="22:00", size_hint=(1,1), height=dp(44))
         self._time_end.text = "22:00"
         time_row.add_widget(self._time_end)
-        apply_btn = KButton(text="应用", bg=GREEN2, fg=BG,
+        apply_btn = KButton(text="Apply", bg=GREEN2, fg=BG,
                             size_hint=(None,1), width=dp(64), height=dp(44))
         apply_btn.bind(on_release=lambda _: App.get_running_app().add_log(
             "时间限制已应用", "SUCCESS"))
@@ -1609,7 +1609,7 @@ class ControlTab(Screen):
             for d in devices:
                 if d["mac"] == self._selected_mac:
                     self._ctrl_dev_lbl.text = d["name"]
-                    self._block_btn.text = "✅ 解封" if d["blocked"] else " 封锁"
+                    self._block_btn.text = "Unblock" if d["blocked"] else "Block"
                     for cat, sw in self._perm_switches.items():
                         sw.active = cat in d.get("allowed_categories",[])
                     break
@@ -1617,7 +1617,7 @@ class ControlTab(Screen):
     def select_device(self, d):
         self._selected_mac = d["mac"]
         self._ctrl_dev_lbl.text = d["name"]
-        self._block_btn.text = "✅ 解封" if d["blocked"] else " 封锁"
+        self._block_btn.text = "Unblock" if d["blocked"] else "Block"
         for cat, sw in self._perm_switches.items():
             sw.active = cat in d.get("allowed_categories",[])
 
@@ -1627,8 +1627,8 @@ class ControlTab(Screen):
         for d in state.devices:
             if d["mac"] == self._selected_mac:
                 d["blocked"] = not d["blocked"]
-                action = "封锁" if d["blocked"] else "解封"
-                self._block_btn.text = "✅ 解封" if d["blocked"] else " 封锁"
+                action = "Blocked" if d["blocked"] else "解封"
+                self._block_btn.text = "Unblock" if d["blocked"] else "Block"
                 App.get_running_app().add_log("{} 已{}".format(d["name"], action),
                     "WARNING" if d["blocked"] else "SUCCESS")
                 break
