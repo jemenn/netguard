@@ -102,22 +102,22 @@ WHITE    = c("FFFFFF")
 
 # 品牌列表
 BRANDS = [
-    ("锐捷/睿易",   "🔵", "ruijie",  "192.168.110.1", "admin", "admin"),
-    ("小米/红米",   "🟠", "xiaomi",  "192.168.31.1",  "admin", ""),
-    ("TP-Link",     "🔴", "tplink",  "192.168.0.1",   "admin", "admin"),
-    ("华为/荣耀",   "🔴", "huawei",  "192.168.3.1",   "admin", ""),
-    ("ASUS 华硕",   "🔵", "asus",    "192.168.50.1",  "admin", "admin"),
-    ("Netgear",     "🟣", "netgear", "192.168.1.1",   "admin", "password"),
-    ("D-Link",      "🟢", "dlink",   "192.168.0.1",   "Admin", ""),
-    ("360 路由",    "🟢", "r360",    "192.168.0.1",   "admin", "admin"),
-    ("腾达 Tenda",  "🔵", "tenda",   "192.168.0.1",   "admin", "admin"),
-    ("水星 Mercury","⚪", "mercury", "192.168.1.1",   "admin", "admin"),
-    ("OpenWrt",     "🐧", "openwrt", "192.168.1.1",   "root",  ""),
-    ("中兴 ZTE",    "🔵", "zte",     "192.168.1.1",   "admin", "admin"),
-    ("演示模式",    "🎭", "demo",    "192.168.1.1",   "",      ""),
+    ("锐捷/睿易",   "[B]", "ruijie",  "192.168.110.1", "admin", "admin"),
+    ("小米/红米",   "[X]", "xiaomi",  "192.168.31.1",  "admin", ""),
+    ("TP-Link",     "[R]", "tplink",  "192.168.0.1",   "admin", "admin"),
+    ("华为/荣耀",   "[R]", "huawei",  "192.168.3.1",   "admin", ""),
+    ("ASUS 华硕",   "[B]", "asus",    "192.168.50.1",  "admin", "admin"),
+    ("Netgear",     "[N]", "netgear", "192.168.1.1",   "admin", "password"),
+    ("D-Link",      "[G]", "dlink",   "192.168.0.1",   "Admin", ""),
+    ("360 路由",    "[G]", "r360",    "192.168.0.1",   "admin", "admin"),
+    ("腾达 Tenda",  "[B]", "tenda",   "192.168.0.1",   "admin", "admin"),
+    ("水星 Mercury","[M]", "mercury", "192.168.1.1",   "admin", "admin"),
+    ("OpenWrt",     "[O]", "openwrt", "192.168.1.1",   "root",  ""),
+    ("中兴 ZTE",    "[B]", "zte",     "192.168.1.1",   "admin", "admin"),
+    ("演示模式",    "[D]", "demo",    "192.168.1.1",   "",      ""),
 ]
 
-PLATFORM_CATS = ["🎮 游戏", "📺 视频", "🌐 浏览", "💬 社交", "📁 下载"]
+PLATFORM_CATS = ["[Game] 游戏", "[TV] 视频", "[Web] 浏览", "[Chat] 社交", "[DL] 下载"]
 
 # ════════════════════════════════════════════════════════════
 #  路由器驱动层（内嵌，同 PC 版逻辑）
@@ -375,9 +375,9 @@ class RouterAPI:
         return "未知"
 
     def _icon(self, brand):
-        m = {"Apple":"🍎","Samsung":"📱","Xiaomi":"📱","Huawei":"📱",
-             "Amazon":"🔊","Google":"🔍","未知":"🖥"}
-        return m.get(brand, "🖥")
+        m = {"Apple":"[Apple]","Samsung":"[Phone]","Xiaomi":"[Phone]","Huawei":"[Phone]",
+             "Amazon":"[Speaker]","Google":"[Google]","未知":"[Desktop]"}
+        return m.get(brand, "[Desktop]")
 
     def _clients_ruijie(self):
         devs = {}
@@ -506,7 +506,7 @@ class RouterAPI:
             r'[0-9A-Fa-f]{2}[:\-][0-9A-Fa-f]{2}[:\-][0-9A-Fa-f]{2})', r.text)))
         ips  = re.findall(r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})', r.text)
         return [self._make_dev(ip=ips[i] if i<len(ips) else "",
-                               mac=m.upper(), name="🖥 "+m, brand=self._guess_brand(m.upper()))
+                               mac=m.upper(), name="[Dsk] "+m, brand=self._guess_brand(m.upper()))
                 for i, m in enumerate(macs)]
 
     def _clients_r360(self):
@@ -632,16 +632,16 @@ class RouterAPI:
         import random as rnd
         base = ".".join(self.host.split(".")[:3])
         templates = [
-            ("iPhone 15 Pro","Apple","📱","AC:BC:32"),
-            ("MacBook Pro","Apple","💻","F4:F1:5A"),
-            ("小米14","Xiaomi","📱","74:DA:38"),
-            ("华为MateBook","Huawei","💻","48:88:CA"),
-            ("Surface Pro","Microsoft","💻","60:45:CB"),
-            ("Samsung TV","Samsung","📺","2C:FD:A1"),
-            ("PS5","Sony","🎮","F8:46:1C"),
-            ("Switch","Nintendo","🎮","98:41:5C"),
-            ("Echo Dot","Amazon","🔊","18:31:BF"),
-            ("iPad Pro","Apple","📟","3C:22:FB"),
+            ("iPhone 15 Pro","Apple","[Phone]","AC:BC:32"),
+            ("MacBook Pro","Apple","[PC]","F4:F1:5A"),
+            ("小米14","Xiaomi","[Phone]","74:DA:38"),
+            ("华为MateBook","Huawei","[PC]","48:88:CA"),
+            ("Surface Pro","Microsoft","[PC]","60:45:CB"),
+            ("Samsung TV","Samsung","[TV]","2C:FD:A1"),
+            ("PS5","Sony","[Game]","F8:46:1C"),
+            ("Switch","Nintendo","[Game]","98:41:5C"),
+            ("Echo Dot","Amazon","[Speaker]","18:31:BF"),
+            ("iPad Pro","Apple","[Pad]","3C:22:FB"),
         ]
         result = []
         for i, (name, brand, icon, oui) in enumerate(templates[:rnd.randint(5,9)]):
@@ -977,7 +977,7 @@ class ConnectScreen(Screen):
             "netgear": "默认密码为 password",
             "dlink":   "默认密码为空",
             "openwrt": "ubus JSON-RPC 认证",
-            "demo":    "🎭 演示模式 — 使用模拟数据，无需真实路由器",
+            "demo":    "[D] 演示模式 — 使用模拟数据，无需真实路由器",
         }
         self._note_lbl.text = notes.get(bid, "")
         is_demo = bid == "demo"
@@ -1053,7 +1053,7 @@ class MainScreen(Screen):
                                   size_hint=(1,1), halign="left")
         top.add_widget(self._router_lbl)
 
-        refresh_btn = KButton(text="🔄", bg=CARD2, fg=ACCENT,
+        refresh_btn = KButton(text="Refresh", bg=CARD2, fg=ACCENT,
                               size_hint=(None,1), width=dp(40), height=dp(36),
                               font_size=sp(14))
         refresh_btn.bind(on_release=lambda _: self._tab_dev.refresh())
@@ -1086,10 +1086,10 @@ class MainScreen(Screen):
                  size=lambda *_: setattr(self._nav_bg, "size", nav.size))
 
         nav_items = [
-            ("📊", "监控", "dash"),
-            ("🖥",  "设备", "devices"),
-            ("🔒", "控制", "control"),
-            ("📋", "日志", "log"),
+            (">>", "监控", "dash"),
+            ("[Desktop]",  "设备", "devices"),
+            ("**", "控制", "control"),
+            ("--", "日志", "log"),
         ]
         self._nav_btns = {}
         for icon, label_text, tab_name in nav_items:
@@ -1247,7 +1247,7 @@ class DashTab(Screen):
                                   color=TEXT3, halign="left", size_hint=(1,1)))
         if d.get("signal"):
             bot_row.add_widget(Label(
-                text="📶 {}%".format(d["signal"]),
+                text=" {}%".format(d["signal"]),
                 font_size=sp(10), color=TEXT3,
                 halign="right", size_hint=(None,1), width=dp(70)))
         card.add_widget(bot_row)
@@ -1268,11 +1268,11 @@ class DeviceTab(Screen):
         # 工具栏
         tb = BoxLayout(orientation="horizontal", size_hint=(1,None),
                        height=dp(44), padding=[dp(10),dp(4)], spacing=dp(8))
-        self._search = KInput(hint="🔍 搜索设备或IP",
+        self._search = KInput(hint="[Ggl] 搜索设备或IP",
                                size_hint=(1,1), height=dp(36))
         self._search.bind(text=self._on_search)
         tb.add_widget(self._search)
-        ref_btn = KButton(text="🔄", bg=ACCENT2, fg=BG,
+        ref_btn = KButton(text="", bg=ACCENT2, fg=BG,
                           size_hint=(None,1), width=dp(44), height=dp(36))
         ref_btn.bind(on_release=lambda _: self.refresh())
         tb.add_widget(ref_btn)
@@ -1342,7 +1342,7 @@ class DeviceTab(Screen):
                                size_hint=(None,1), width=dp(14)))
         row1.add_widget(Label(text=d["name"], color=TEXT, bold=True,
                                font_size=sp(13), halign="left", size_hint=(1,1)))
-        status = "🚫封锁" if d["blocked"] else ("在线" if d["online"] else "离线")
+        status = "封锁" if d["blocked"] else ("在线" if d["online"] else "离线")
         sc = d["stability_score"]
         grade_c = GREEN if sc>=90 else (YELLOW if sc>=75 else RED)
         row1.add_widget(Label(text=status, color=grade_c,
@@ -1452,7 +1452,7 @@ class DeviceDetailPopup(Popup):
             ("⬆ 上传",  "{:.2f} MB/s".format(d["upload_speed"]),  ACCENT, d["upload_speed"],   20),
             ("⬇ 下载",  "{:.2f} MB/s".format(d["download_speed"]),GREEN,  d["download_speed"],  50),
             ("⏱ 延迟",  "{:.1f} ms".format(d["latency"]),         YELLOW, d["latency"],         100),
-            ("📉 丢包",  "{:.1f}%".format(d["loss_rate"]),         ORANGE, d["loss_rate"],       10),
+            (" 丢包",  "{:.1f}%".format(d["loss_rate"]),         ORANGE, d["loss_rate"],       10),
         ]
         for mname, mval, color, raw, maxv in metrics:
             mrow = BoxLayout(orientation="horizontal",
@@ -1471,13 +1471,13 @@ class DeviceDetailPopup(Popup):
         # 操作按钮
         btn_row = BoxLayout(orientation="horizontal",
                             size_hint=(1,None), height=dp(46), spacing=dp(10))
-        block_txt = "✅ 解封设备" if d["blocked"] else "🚫 封锁设备"
+        block_txt = "✅ 解封设备" if d["blocked"] else " 封锁设备"
         block_bg  = GREEN2 if d["blocked"] else RED
         block_btn = KButton(text=block_txt, bg=block_bg, fg=WHITE)
         block_btn.bind(on_release=lambda _: self._toggle_block())
         btn_row.add_widget(block_btn)
 
-        ping_btn = KButton(text="📡 Ping 测试", bg=ACCENT2, fg=BG)
+        ping_btn = KButton(text="[Rtr] Ping 测试", bg=ACCENT2, fg=BG)
         ping_btn.bind(on_release=lambda _: self._ping())
         btn_row.add_widget(ping_btn)
         root.add_widget(btn_row)
@@ -1553,7 +1553,7 @@ class ControlTab(Screen):
 
         ctrl_btns = BoxLayout(orientation="horizontal",
                               size_hint=(1,None), height=dp(36), spacing=dp(8))
-        self._block_btn = KButton(text="🚫 封锁", bg=RED, fg=WHITE,
+        self._block_btn = KButton(text=" 封锁", bg=RED, fg=WHITE,
                                    height=dp(36), font_size=sp(12))
         self._block_btn.bind(on_release=lambda _: self._toggle_block())
         ctrl_btns.add_widget(self._block_btn)
@@ -1564,8 +1564,8 @@ class ControlTab(Screen):
         layout.add_widget(KLabel(text="平台访问权限", font_size=sp(13),
                                   color=TEXT2, bold=True, height=dp(32)))
         self._perm_switches = {}
-        perm_colors = {"🎮 游戏": PURPLE,"📺 视频":RED,
-                       "🌐 浏览":ACCENT,"💬 社交":GREEN,"📁 下载":YELLOW}
+        perm_colors = {"[Game] 游戏": PURPLE,"[TV] 视频":RED,
+                       " 浏览":ACCENT," 社交":GREEN," 下载":YELLOW}
         for cat in PLATFORM_CATS:
             row = BoxLayout(orientation="horizontal",
                             size_hint=(1,None), height=dp(44))
@@ -1609,7 +1609,7 @@ class ControlTab(Screen):
             for d in devices:
                 if d["mac"] == self._selected_mac:
                     self._ctrl_dev_lbl.text = d["name"]
-                    self._block_btn.text = "✅ 解封" if d["blocked"] else "🚫 封锁"
+                    self._block_btn.text = "✅ 解封" if d["blocked"] else " 封锁"
                     for cat, sw in self._perm_switches.items():
                         sw.active = cat in d.get("allowed_categories",[])
                     break
@@ -1617,7 +1617,7 @@ class ControlTab(Screen):
     def select_device(self, d):
         self._selected_mac = d["mac"]
         self._ctrl_dev_lbl.text = d["name"]
-        self._block_btn.text = "✅ 解封" if d["blocked"] else "🚫 封锁"
+        self._block_btn.text = "✅ 解封" if d["blocked"] else " 封锁"
         for cat, sw in self._perm_switches.items():
             sw.active = cat in d.get("allowed_categories",[])
 
@@ -1628,7 +1628,7 @@ class ControlTab(Screen):
             if d["mac"] == self._selected_mac:
                 d["blocked"] = not d["blocked"]
                 action = "封锁" if d["blocked"] else "解封"
-                self._block_btn.text = "✅ 解封" if d["blocked"] else "🚫 封锁"
+                self._block_btn.text = "✅ 解封" if d["blocked"] else " 封锁"
                 App.get_running_app().add_log("{} 已{}".format(d["name"], action),
                     "WARNING" if d["blocked"] else "SUCCESS")
                 break
