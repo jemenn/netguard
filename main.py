@@ -7,14 +7,19 @@ NetGuard Pro — Android Kivy 版
 
 # ── Kivy 配置（必须在 import kivy 之前）─────────────────
 import os
-os.environ["KIVY_WINDOW"] = "android" if os.path.exists("/system/build.prop") else "sdl2"
-os.environ["KIVY_ORIENTATION"] = "Portrait"
+
+# Android 环境检测
+_IS_ANDROID = os.path.exists("/system/build.prop")
+
+if not _IS_ANDROID:
+    # 仅桌面调试时设置窗口大小
+    from kivy.config import Config
+    Config.set("graphics", "resizable", "0")
+    Config.set("graphics", "width",  "412")
+    Config.set("graphics", "height", "915")
 
 from kivy.config import Config
-Config.set("graphics", "resizable", "0")
 Config.set("kivy", "log_level", "warning")
-Config.set("graphics", "width",  "412")
-Config.set("graphics", "height", "915")
 
 # ── 标准库 ────────────────────────────────────────────────
 import threading
@@ -31,14 +36,17 @@ from functools import partial
 
 # ── Kivy 核心 ─────────────────────────────────────────────
 import kivy
-kivy.require("2.3.0")
+# kivy.require("2.3.0")  # 注释掉避免版本不匹配崩溃
 
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.metrics import dp, sp
 from kivy.utils import get_color_from_hex
 from kivy.animation import Animation
-from kivy.core.window import Window
+try:
+    from kivy.core.window import Window
+except Exception:
+    Window = None
 
 # ── Kivy UI 组件 ──────────────────────────────────────────
 from kivy.uix.screenmanager import ScreenManager, Screen, SlideTransition, FadeTransition
@@ -1723,7 +1731,8 @@ class NetGuardApp(App):
     title = "NetGuard Pro"
 
     def build(self):
-        Window.clearcolor = BG
+        if Window is not None:
+            Window.clearcolor = BG
 
         self.sm = ScreenManager(transition=SlideTransition())
         self._brand_screen   = BrandScreen(name="brand")
@@ -1747,9 +1756,11 @@ class NetGuardApp(App):
 
     def go_brand(self):
         state.monitoring = False
-        time.sleep(0.1)
-        self.sm.transition.direction = "right"
-        self.sm.current = "brand"
+        # 不能在主线程 sleep，用 Clock 延迟
+        def _do_switch(dt):
+            self.sm.transition.direction = "right"
+            self.sm.current = "brand"
+        Clock.schedule_once(_do_switch, 0.1)
 
     def go_main(self, msg):
         self.sm.transition.direction = "left"
