@@ -313,32 +313,32 @@ class RouterAPI:
                     data={"JSESSIONID":jsid,"usr":u,"psw":p,
                           "cmd":"1","nextpage":"maincfg_t.gch"}, timeout=8)
                 text = r.text
-                self.sid = self.session.cookies.get("JSESSIONID", jsid)
-                if (r.status_code==302 or
-                    any(k in text for k in ["maincfg","logout","statusinfo"]) or
-                    (r.status_code==200 and len(text)>800
-                     and "login" not in text[:300].lower())):
-                    self._zte_auth = 2
-                    return True, "ZTE SuperAdmin({}) OK".format(u)
-            except Exception:
-                pass
-        # 普通用户降级：用背面账号 user + 用户填写的密码
-        fallback_pairs = [
-            (self.username if self.username else "user", self.password),
-            ("user", self.password),
-        ]
-        for u2, p2 in fallback_pairs:
-            try:
-                r0   = self.session.get("http://{}/".format(self.host), timeout=5)
-                jsid = self.session.cookies.get("JSESSIONID","")
-                r    = self.session.post(
-                    "http://{}/getpage.gch?pid=1002&nextpage=logoff_t.gch".format(self.host),
-                    data={"JSESSIONID":jsid,"usr":u2,"psw":p2,
-                          "cmd":"1","nextpage":"maincfg_t.gch"}, timeout=8)
-                self.sid = self.session.cookies.get("JSESSIONID", jsid)
-                self._zte_auth = 1
-                if r.status_code in (200,302):
-                    return True, "ZTE user login OK (limited data)"
+                new_jsid = self.session.cookies.get("JSESSIONID", jsid)
+                # 判断登录成功：
+                # 1. 302 跳转
+                # 2. 页面含管理关键词
+                # 3. 状态码200且页面较长且不含登录表单特征
+                # 4. JSESSIONID 发生了变化（说明服务端新建了会话）
+                is_ok = (
+                    r.status_code == 302 or
+                    any(k in text for k in [
+                        "maincfg", "logout", "logoff", "statusinfo",
+                        "mainmenu", "设备信息", "网络设置", "top.location"
+                    ]) or
+                    (r.status_code == 200 and len(text) > 500
+                     and not any(k in text[:600].lower() for k in
+                                 ["psw", "password", "usr=", "login_form",
+                                  "invalid", "error", "incorrect"])) or
+                    (new_jsid and new_jsid != jsid)
+                )
+                if is_ok:
+                    self.sid = new_jsid
+                    # 判断是超管还是普通用户
+                    is_super = any(k in text for k in
+                        ["maincfg","logoff","设备管理","高级设置","DevMng"])
+                    self._zte_auth = 2 if is_super else 1
+                    level = "SuperAdmin" if is_super else "User"
+                    return True, "ZTE {} login OK ({})".format(level, u)
             except Exception:
                 pass
         return False, "ZTE login failed - check password"
