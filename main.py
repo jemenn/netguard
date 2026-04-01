@@ -113,7 +113,7 @@ BRANDS = [
     ("Tenda",  "[B]", "tenda",   "192.168.0.1",   "admin", "admin"),
     ("Mercury","[M]", "mercury", "192.168.1.1",   "admin", "admin"),
     ("OpenWrt",     "[O]", "openwrt", "192.168.1.1",   "root",  ""),
-    ("ZTE G7615",    "[B]", "zte",     "192.168.1.1",   "admin", "admin"),
+    ("ZTE G7615V2",  "[B]", "zte",     "192.168.1.1",   "user",  ""),
     ("Demo Mode",    "[D]", "demo",    "192.168.1.1",   "",      ""),
 ]
 
@@ -291,9 +291,19 @@ class RouterAPI:
         SUPER = [("cuadmin","cuadmin"),("CUAdmin","CUAdmin"),
                  ("cuadmin","CUAdmin"),("lnadmin","lnadmin")]
         cands = []
-        if self.username not in ("user",""):
+        # 先放用户自填的账号（无论是 user 还是超级账号都试）
+        if self.username:
             cands.append((self.username, self.password))
+        # 再自动尝试联通超级账号
         cands.extend(SUPER)
+        # 去重
+        seen_cands = set()
+        unique_cands = []
+        for c in cands:
+            if c not in seen_cands:
+                seen_cands.add(c)
+                unique_cands.append(c)
+        cands = unique_cands
         for u, p in cands:
             try:
                 r0   = self.session.get("http://{}/".format(self.host), timeout=5)
@@ -312,21 +322,25 @@ class RouterAPI:
                     return True, "ZTE SuperAdmin({}) OK".format(u)
             except Exception:
                 pass
-        # 普通用户降级
-        try:
-            u2   = self.username if self.username else "user"
-            r0   = self.session.get("http://{}/".format(self.host), timeout=5)
-            jsid = self.session.cookies.get("JSESSIONID","")
-            r    = self.session.post(
-                "http://{}/getpage.gch?pid=1002&nextpage=logoff_t.gch".format(self.host),
-                data={"JSESSIONID":jsid,"usr":u2,"psw":self.password,
-                      "cmd":"1","nextpage":"maincfg_t.gch"}, timeout=8)
-            self.sid = self.session.cookies.get("JSESSIONID", jsid)
-            self._zte_auth = 1
-            if r.status_code in (200,302):
-                return True, "ZTE user login OK (limited)"
-        except Exception as e:
-            return False, str(e)[:50]
+        # 普通用户降级：用背面账号 user + 用户填写的密码
+        fallback_pairs = [
+            (self.username if self.username else "user", self.password),
+            ("user", self.password),
+        ]
+        for u2, p2 in fallback_pairs:
+            try:
+                r0   = self.session.get("http://{}/".format(self.host), timeout=5)
+                jsid = self.session.cookies.get("JSESSIONID","")
+                r    = self.session.post(
+                    "http://{}/getpage.gch?pid=1002&nextpage=logoff_t.gch".format(self.host),
+                    data={"JSESSIONID":jsid,"usr":u2,"psw":p2,
+                          "cmd":"1","nextpage":"maincfg_t.gch"}, timeout=8)
+                self.sid = self.session.cookies.get("JSESSIONID", jsid)
+                self._zte_auth = 1
+                if r.status_code in (200,302):
+                    return True, "ZTE user login OK (limited data)"
+            except Exception:
+                pass
         return False, "ZTE login failed - check password"
 
     def fetch_clients(self):
@@ -603,7 +617,7 @@ class RouterAPI:
                         name="{} {}".format(self._icon(b),ip or mac),
                         brand=b,online=True,iface=iface)
             return bool(seen)
-        # DHCP表（超级管理员）
+        # DHCP table (super admin only)
         if getattr(self,"_zte_auth",1)>=2:
             for pg in ["/getpage.gch?pid=1004&nextpage=net_dhcp_landhcpStatInfo_t.gch",
                        "/getpage.gch?pid=1004&nextpage=net_lan_dhcpd_t.gch"]:
@@ -611,14 +625,14 @@ class RouterAPI:
                     text=self.session.get("http://{}{}".format(self.host,pg),timeout=8).text
                     if _fill(text): break
                 except Exception: pass
-        # 无线关联
+        # WiFi association table
         for pg in ["/getpage.gch?pid=1002&nextpage=statusinfo_wlan_t.gch",
                    "/getpage.gch?pid=1004&nextpage=net_wlan_assoc_t.gch"]:
             try:
                 text=self.session.get("http://{}{}".format(self.host,pg),timeout=8).text
                 if _fill(text,"WiFi"): break
             except Exception: pass
-        # ARP兜底
+        # ARP table fallback
         for pg in ["/getpage.gch?pid=1002&nextpage=statusinfo_arp_t.gch",
                    "/getpage.gch?pid=1004&nextpage=net_lan_arptable_t.gch"]:
             try:
@@ -971,13 +985,14 @@ class ConnectScreen(Screen):
         self._inp_user.text = dusr
         self._inp_pass.text = dpwd
         notes = {
-            "ruijie":  "ReyeeOS — 密码使用 AES 加密传输",
-            "xiaomi":  "使用路由器管理密码（非 WiFi 密码）",
-            "asus":    "ASUSWRT — 支持 RT/ZenWiFi 系列",
-            "netgear": "默认密码为 password",
-            "dlink":   "默认密码为空",
-            "openwrt": "ubus JSON-RPC 认证",
-            "demo":    "[D] 演示模式 — 使用模拟数据，无需真实路由器",
+            "ruijie":  "ReyeeOS - password auto AES encrypted",
+            "xiaomi":  "Use router admin password (not WiFi password)",
+            "asus":    "ASUSWRT - RT / ZenWiFi series",
+            "netgear": "Default password: password",
+            "dlink":   "Default password is blank",
+            "openwrt": "ubus JSON-RPC auth",
+            "zte":     "Unicom ONT: enter label user/password; cuadmin for full data",
+            "demo":    "[D] Demo mode - simulated data, no router needed",
         }
         self._note_lbl.text = notes.get(bid, "")
         is_demo = bid == "demo"
